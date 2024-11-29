@@ -31,7 +31,9 @@ db.connect((err) => {
   }
   console.log('Connected to the database.');
 });
-
+app.get('/',(req,res)=>{
+  res.send('Hello World!')
+})
 // Firebase Authentication Route
 app.post('/auth/firebase', async (req, res) => {
   const { idToken } = req.body;
