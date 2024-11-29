@@ -32,7 +32,7 @@ db.connect((err) => {
   console.log('Connected to the database.');
 });
 app.get('/',(req,res)=>{
-  res.send('Hello World!')
+  res.send('Hello World this is bright!')
 })
 // Firebase Authentication Route
 app.post('/auth/firebase', async (req, res) => {
