@@ -1,71 +1,177 @@
-const db = require('../config/db');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
 
-// Enregistrement d'un utilisateur
-exports.register = async (req, res) => {
-  const { username, password } = req.body;
 
-  db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-    if (err) {
-      return res.status(500).json({ message: 'Database query error', error: err });
+
+function verifyToken(req, res, next) {
+  try {
+    // Extraire le token de l'en-tête Authorization
+    const authHeader = req.headers['authorization'];
+    
+    // Vérifier si l'en-tête Authorization existe et commence par "Bearer "
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        message: 'Invalid token format',
+        error: 'Token must be provided in the format: Bearer <token>'
+      });
     }
-    if (results.length > 0) {
-      return res.status(400).json({ message: 'Username already exists' });
+
+    // Extraire le token en supprimant le préfixe "Bearer "
+    const token = authHeader.split(' ')[1];
+
+    // Vérifier si le token est vide
+    if (!token) {
+      return res.status(403).json({ 
+        message: 'No token provided',
+        error: 'Authentication token is missing'
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser  = {
-      uuid: uuidv4(),
-      username,
-      password: hashedPassword,
-    };
-
-    db.query('INSERT INTO users SET ?', newUser , (err, results) => {
+    // Vérifier le token avec des options supplémentaires
+    jwt.verify(token, process.env.JWT_SECRET, {
+      algorithms: ['HS256'], // Spécifier l'algorithme
+      maxAge: '24h' // Durée de validité du token
+    }, (err, decoded) => {
       if (err) {
-        return res.status(500).json({ message: 'Error creating user', error: err });
+        // Gérer différents types d'erreurs de token
+        let errorMessage = 'Unauthorized';
+        let statusCode = 401;
+
+        switch (err.name) {
+          case 'TokenExpiredError':
+            errorMessage = 'Token has expired';
+            statusCode = 401;
+            break;
+          case 'JsonWebTokenError':
+            errorMessage = 'Invalid token';
+            statusCode = 403;
+            break;
+          case 'NotBeforeError':
+            errorMessage = 'Token not yet active';
+            statusCode = 403;
+            break;
+          default:
+            errorMessage = 'Authentication failed';
+        }
+
+        return res.status(statusCode).json({ 
+          message: errorMessage,
+          error: err.message
+        });
       }
-      res.status(201).json({ message: 'User  created successfully', userId: newUser .id });
+      req.user = {
+        uid: decoded.uid,
+        email: decoded.email
+      };
+      // Vérification supplémentaire (optionnel)
+      if (decoded.disabled === true) {
+        return res.status(403).json({ 
+          message: 'Account disabled',
+          error: 'Your account has been disabled'
+        });
+      }
+
+      next();
     });
-  });
-};
-
-// Connexion d'un utilisateur
-exports.login = async (req, res) => {
-  const { username, password } = req.body;
-
-  db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
-    if (err) {
-      return res.status(500).json({ message: 'Database query error', error: err });
-    }
-    if (results.length === 0) {
-      return res .status(400).json({ message: 'Invalid username or password' });
-    }
-
-    const user = results[0];
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid username or password' });
-    }
-
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-    res.json({ token, userId: user.id });
-  });
-};
-
-// Middleware pour vérifier le token JWT
-exports.verifyToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) {
-    return res.status(403).json({ message: 'No token provided' });
+  } catch (error) {
+    // Gestion des erreurs inattendues
+    console.error('Token verification error:', error);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: 'An unexpected error occurred during authentication'
+    });
   }
+}
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({ message: 'Unauthorized' });
+function generateTicketData(companies, cities, places) {
+  const seatOptions = [19, 30, 40, 50, 70, 75];
+  const minPrice = 5000;
+  const maxPrice = 10000;
+  const minDiscount = 1;
+  const maxDiscount = 20;
+  const layouts = ['2-2', '3-2'];
+
+  const ticketData = [];
+
+  companies.forEach(company => {
+    for (let i = 0; i < 2; i++) {
+      const departurePlace = places[Math.floor(Math.random() * places.length)];
+      const arrivalPlaces = places.filter(place => place.lieu !== departurePlace.lieu).sort(() => 0.5 - Math.random()).slice(0, 2);
+
+      const totalSeats = seatOptions[Math.floor(Math.random() * seatOptions.length)];
+      const price = Math.floor(Math.random() * (maxPrice - minPrice + 1)) + minPrice;
+      const discount = Math.floor(Math.random() * (maxDiscount - minDiscount + 1)) + minDiscount;
+      const discountedPrice = price - (price * discount) / 100;
+
+      const currentDate = new Date();
+      const departureTime = new Date(currentDate.getTime() + Math.random() * 3600000 * 24);
+      const arrivalTime = new Date(departureTime.getTime() + Math.random() * 3600000 * 5 + 2 * 3600000);
+
+      ticketData.push({
+        companyName: company,
+        departure_companyDescription: {
+          name1: `${company.toLowerCase()} ${places[i].lieu}`,
+          position: departurePlace.position,
+        },
+        rating: (Math.random() * 2 + 3).toFixed(1), // Random rating between 3.0 and 5.0
+        departureCity: cities[0],
+        date_time: departureTime.toLocaleDateString(),
+        departureTime: departureTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        duration: `${Math.floor((arrivalTime - departureTime) / 3600000)}h ${Math.floor(((arrivalTime - departureTime) % 3600000) / 60000)}m`,
+        arrivalCity: cities[1],
+        arrival_companyDescription: {
+          name1: `${company.toLowerCase()} ${places[2].lieu}`,
+          name2: `${company.toLowerCase()} ${places[3].lieu}`,
+          position1: arrivalPlaces[0].position,
+          position2: arrivalPlaces[1].position,
+        },
+        arrivalTime: arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        seatsAvailable: Math.floor(Math.random() * totalSeats),
+        discount,
+        originalPrice: `XAF ${price}`,
+        price: `XAF ${Math.ceil(discountedPrice)}`,
+        options: {
+          wifi: true,
+          securitycamera: true,
+          toilet: Math.random() > 0.5,
+          airconditioning: true,
+          poweroutlet: true,
+          tv: true,
+          Vipclass: Math.random() > 0.5,
+          TotalSeats: totalSeats,
+          plan: totalSeats > 40 ? layouts[1] : layouts[0],
+        },
+      });
     }
-    req.userId = decoded.id;
-    next();
   });
-};
+  return ticketData;
+}
+const companies = [
+  "General Express",
+  "Global Express",
+  "Amour Mezam Company",
+  "Buca Voyages",
+  "Finexs Voyages",
+  "Garanti Express",
+  "Touristique Express",
+  "Montréal Voyages",
+  "United Express",
+  "Danay Express",
+  "Musango Voyages",
+  "Steve Express",
+  "Moghamo Express",
+  "Kribien Voyages",
+  "Buca Express",
+  "Flash Express",
+  "Golden Express",
+  "Garantie Express",
+  "Afrique Express",
+  "Garanti Express ",
+  "Boulevard Express",
+  "Atlantic Express",
+  "Bus de l'Atlantique",
+  "Sangha Express",
+  "Amour Mezam Express",
+  "Santa Lucia Express"
+];
+module.exports=  { verifyToken, generateTicketData,companies};
+
