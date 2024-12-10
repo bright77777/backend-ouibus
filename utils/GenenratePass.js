@@ -3,7 +3,7 @@ const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const fs = require('fs');
 const path = require('path');
 
-function generateTicketPDF(details, options = {}) {
+async function generateTicketPDF(ticketDetailsList, options = {}) {
     const {
         qrCodePath = 'assets/qr-code.png',
         pdfPath = 'assets/mockup.pdf',
@@ -11,37 +11,41 @@ function generateTicketPDF(details, options = {}) {
         logoPath = 'assets/General.png'
     } = options;
 
-    const jsonString = JSON.stringify(details.data||'https://obus-test.web.app');
+    // Ensure ticketDetailsList is an array
+    const ticketDetails = Array.isArray(ticketDetailsList) ? ticketDetailsList : [ticketDetailsList];
 
     function generateTextLines(details, font, boldFont) {
         return [
             { text: details.departureRegion, font: font, x: 61, y: 67, size: 6 },
-            { text: details.arrival, font: boldFont, x: 122, y: 53, size: 13 },
-            { text: details.departure, font: boldFont, x: 62, y: 53, size: 13 },
-            { text: details.departureTime, font: font, x: 60, y: 29, size: 7 },
-            { text: details.arrivalTime, font: font, x: 122, y: 29, size: 7 },
-            { text: `Row ${details.seatNo[0]}, #${details.seatNo[1]}`, font: font, x: 197, y: 72, size: 6 },
+            { text: details.arrival, font: boldFont, x: 120, y: 53, size: 7 },
+            { text: details.departure, font: boldFont, x: 60, y: 53, size: 7 },
+            { text: details.departureTime, font: font, x: 62, y: 29, size: 7 },
+            { text: details.arrivalTime, font: font, x: 124, y: 29, size: 7 },
+            { text: `Row ${details.seatNo[0] || details.seatNo}`, font: font, x: 197, y: 72, size: 6 },
             { text: `${details.id[0]}-${details.id[1]}`, font: font, x: 182, y: 85, size: 6 },
             { text: `${details.passengerName[0]}. ${details.passengerName[1]}`, font: font, x: 173, y: 109, size: 6 },
             { text: details.ticketNumber, font: boldFont, x: 285, y: 18, size: 10 },
             { text: details.arrivalRegion, font: font, x: 122, y: 67, size: 6 },
-            { text: details.date, font: font, x: 80, y: 17, size: 7 },
+            { text: details.date, font: font, x: 80, y: 17.5, size: 6 },
             { text: details.Agency, font: boldFont, x: 60, y: 98, size: 6 },
-            { text: `${details.AgencyAdress[0]}, BP ${details.AgencyAdress[1]} ${details.AgencyAdress[2]}`, font: font, x: 70, y: 88, size: 6 },
+            { text: `${details.AgencyAdress[0]}, BP ${details.AgencyAdress[1]}`, font: font, x: 70, y: 88.5, size: 6 },
             { text: details.phoneNumber, font: font, x: 194, y: 94, size: 6 }
         ];
     }
 
-    async function generateQRCode() {
+    async function generateQRCode(details) {
+        const jsonString = JSON.stringify(details.data || 'https://obus-test.web.app');
+        const tempQRCodePath = qrCodePath.replace('.png', `_${details.ticketNumber}.png`);
+        
         return new Promise((resolve, reject) => {
-            QRCode.toFile(qrCodePath, jsonString, {
+            QRCode.toFile(tempQRCodePath, jsonString, {
                 width: 150,
                 margin: 1,
             }, (err) => {
                 if (err) {
                     reject('Error generating QR code: ' + err);
                 } else {
-                    resolve();
+                    resolve(tempQRCodePath);
                 }
             });
         });
@@ -51,69 +55,79 @@ function generateTicketPDF(details, options = {}) {
         try {
             // Load existing PDF
             const existingPdfBytes = fs.readFileSync(pdfPath);
-            const qrCodeImageBytes = fs.readFileSync(qrCodePath);
-            const agenceBytes = fs.readFileSync(logoPath);
-
             const pdfDoc = await PDFDocument.load(existingPdfBytes);
-            const qrCodeImage = await pdfDoc.embedPng(qrCodeImageBytes);
-            const agenceImage = await pdfDoc.embedPng(agenceBytes);
 
-            const pages = pdfDoc.getPages();
-            const firstPage = pages[0];
+            // Create a new PDF document with the same template for each ticket
+            const newPdfDoc = await PDFDocument.create();
 
             // Embed fonts
-            const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-            const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+            const font = await newPdfDoc.embedFont(StandardFonts.Helvetica);
+            const boldFont = await newPdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-            // Text lines with positioning
-            const textLines = generateTextLines(details, font, boldFont);
+            // Process each ticket
+            for (const details of ticketDetails) {
+                // Copy the first page from the template PDF
+                const [templatePage] = await newPdfDoc.copyPages(pdfDoc, [0]);
+                const currentPage = newPdfDoc.addPage(templatePage);
 
-            // Draw text
-            textLines.forEach(line => {
-                firstPage.drawText(line.text, {
-                    x: line.x,
-                    y: line.y,
-                    size: line.size,
-                    font: line.font,
-                    color: rgb(0, 0, 0),
+                // Generate QR code for this ticket
+                const currentQRCodePath = await generateQRCode(details);
+                const qrCodeImageBytes = fs.readFileSync(currentQRCodePath);
+                const qrCodeImage = await newPdfDoc.embedPng(qrCodeImageBytes);
+
+                // Load agency logo
+                const agenceBytes = fs.readFileSync(details.companies || logoPath);
+                const agenceImage = await newPdfDoc.embedPng(agenceBytes);
+
+                // Text lines with positioning
+                const textLines = generateTextLines(details, font, boldFont);
+
+                // Draw text
+                textLines.forEach(line => {
+                    currentPage.drawText(line.text, {
+                        x: line.x,
+                        y: line.y,
+                        size: line.size,
+                        font: line.font,
+                        color: rgb(0, 0, 0),
+                    });
                 });
-            });
 
-            // QR Code positioning
-            const qrCodeDimensions = qrCodeImage.scale(0.7); 
-            const agenceDimensions = agenceImage.scale(0.5);
+                // QR Code positioning
+                const qrCodeDimensions = qrCodeImage.scale(0.7); 
+                const agenceDimensions = agenceImage.scale(0.5);
 
-            firstPage.drawImage(qrCodeImage, {
-                x: firstPage.getWidth() - qrCodeDimensions.width - 10,
-                y: firstPage.getHeight() - qrCodeDimensions.height - 10,
-                width: qrCodeDimensions.width,
-                height: qrCodeDimensions.height,
-            });
+                currentPage.drawImage(qrCodeImage, {
+                    x: currentPage.getWidth() - qrCodeDimensions.width - 10,
+                    y: currentPage.getHeight() - qrCodeDimensions.height - 10,
+                    width: qrCodeDimensions.width,
+                    height: qrCodeDimensions.height,
+                });
 
-            // Agency Logo positioning
-            firstPage.drawImage(agenceImage, {
-                x: firstPage.getWidth() / 5 - agenceDimensions.width / 5 + 1,
-                y: firstPage.getHeight() - agenceDimensions.height - 1,
-                width: agenceDimensions.width - 20,
-                height: agenceDimensions.height - 5,
-            });
+                // Agency Logo positioning
+                currentPage.drawImage(agenceImage, {
+                    x: currentPage.getWidth() / 5 - agenceDimensions.width / 5 + 1,
+                    y: currentPage.getHeight() - agenceDimensions.height - 1,
+                    width: agenceDimensions.width - 20,
+                    height: agenceDimensions.height - 5,
+                });
+            }
 
             // Save the modified PDF
-            const pdfBytes = await pdfDoc.save();
+            const pdfBytes = await newPdfDoc.save();
             fs.writeFileSync(outputFilePath, pdfBytes);
-            console.log('PDF modified successfully with QR code and images at', outputFilePath);
+            console.log('PDF generated successfully with multiple tickets at', outputFilePath);
 
             return outputFilePath;
 
         } catch (error) {
-            console.error('Error modifying PDF:', error);
+            console.error('Error generating PDF:', error);
             throw error;
         }
     }
 
     return new Promise(async (resolve, reject) => {
         try {
-            await generateQRCode();
             const outputPath = await addTextAndImageToPDF();
             resolve(outputPath);
         } catch (error) {
