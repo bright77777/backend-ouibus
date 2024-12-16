@@ -105,12 +105,27 @@ async function generateTicketPDF(ticketDetailsList, options = {}) {
                 });
 
                 // Agency Logo positioning
+                const maxImageWidth = 100; // Largeur maximale de l'image
+                const maxImageHeight = 95; // Hauteur maximale de l'image
+                
+                let { width, height } = agenceDimensions;
+                
+                // Calculer le ratio pour maintenir les proportions
+                const widthRatio = maxImageWidth / width;
+                const heightRatio = maxImageHeight / height;
+                const minRatio = Math.min(widthRatio, heightRatio);
+                
+                // Ajuster les dimensions de l'image
+                width = width * minRatio;
+                height = height * minRatio;
+                
                 currentPage.drawImage(agenceImage, {
-                    x: currentPage.getWidth() / 5 - agenceDimensions.width / 5 + 1,
-                    y: currentPage.getHeight() - agenceDimensions.height - 1,
-                    width: agenceDimensions.width - 20,
-                    height: agenceDimensions.height - 5,
+                  x: currentPage.getWidth() / 5 - width / 5 -3,
+                  y: currentPage.getHeight() - height - 3,
+                  width: width,
+                  height: height,
                 });
+                
             }
 
             // Save the modified PDF

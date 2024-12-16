@@ -10,23 +10,30 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const {verifyToken,generateTicketData,companies} = require('./controllers/authController');
 const { body, validationResult } = require('express-validator');
-const GeneratorRoute=require('./routes/GeneratorRoute');
+const GeneratorRoute=require('./routes/GeneratorRoute')
+const  db= require('./db/Poolconnect')
 const { v4: uuidv4 } = require('uuid');
-const  pool= require('./db/Poolconnect');
-const Passengers=require('./routes/Passengers')
-const MobilePayement=require('./routes/MobilePayement')
 
-// Middleware parsing JSON
+
+// Middleware pour la sécurité HTTP headers
+app.use(helmet({ 
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } 
+}));
+
+// Middleware pour traiter JSON avec body-parser
 app.use(bodyParser.json({
   verify: (req, res, buf) => {
+      // Limite la taille du payload
       if (buf.length > 1024 * 1024) { // Limite à 1MB
-          throw new Error('Payload too large'); 
+          throw new Error('Payload too large'); // ou ValidationError selon ta gestion d'erreurs
       }
   }
 }));
-app.use(cors());
-app.use( helmet({ crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } }) );
 
+app.use(cors());
+// MySQL Database Connection
+
+app.use('/', GeneratorRoute);
 
 
 const places = [
@@ -35,31 +42,16 @@ const places = [
   { lieu: 'mboppi', position: [4.0483, 9.7044] },
   { lieu: 'bonaberi', position: [4.0735, 9.7083] },
 ];
+
 const executeQuery = async (query, params) => {
   try {
-    // Sanitize and validate params before executing
-    const sanitizedParams = params.map(param => 
-      param === undefined || param === null ? '' : param
-    );
-
-    // Execute the query with sanitized parameters
-    const [results] = await pool.execute(query, sanitizedParams);
-    return results;
+      const [results] = await pool.execute(query, params);
+      return results;
   } catch (error) {
-    console.error('Detailed Query Execution Error:', {
-      errorCode: error.code,
-      errorMessage: error.message,
-      sqlQuery: error.sql,
-      sqlState: error.sqlState
-    });
-    throw new Error(`Database query failed: ${error.message}`);
-  }
+     throw new Error(`Database query failed: ${error.message}`);  }
 };
 
-app.use('/', GeneratorRoute);
-app.use('/', Passengers);
-app.use('/', MobilePayement);
-
+// Routes d'authentification
 app.post('/',verifyToken, (req, res) => {
   // Vérifier que le corps de la requête contient les données nécessaires
   if (!req.body || !req.body.depart || !req.body.destination) {
@@ -85,7 +77,6 @@ app.post('/',verifyToken, (req, res) => {
 });
 
 
-
 // Firebase Authentication Route
 app.post('/auth/firebase', async (req, res) => {
   const { idToken } = req.body;
@@ -98,17 +89,20 @@ app.post('/auth/firebase', async (req, res) => {
     // Verify the token
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
+    console.log(decodedToken)
+
     // Generate custom JWT
     const customToken = jwt.sign(
       { 
         uid: decodedToken.uid, 
-        email: decodedToken.email 
+        email: decodedToken.email,
+        phone:decodedToken.phone_number 
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    // Prepare user data with null coalescing
+    // Prepare user data
     const user = {
       uid: decodedToken.uid,
       email: decodedToken.email || null,
@@ -118,65 +112,45 @@ app.post('/auth/firebase', async (req, res) => {
     };
 
     // Upsert user in database
-    const userQuery = `
+    const userquery = `
       INSERT INTO users 
-      (user_id, email, phone_number, full_name, profile_picture, role) 
-      VALUES (?, ?, ?, ?, ?, 'client') 
+      (user_id, email, phone_number, full_name, profile_picture,role) 
+      VALUES (?, ?, ?, ?, ?,'client') 
       ON DUPLICATE KEY UPDATE 
-      email = VALUES(email), 
-      phone_number = VALUES(phone_number), 
-      full_name = VALUES(full_name), 
-      profile_picture = VALUES(profile_picture)
+      email = ?, 
+      phone = ?, 
+      display_name = ?, 
+      profile_picture = ?
     `;
-    const userParams = [
-      user.uid, 
-      user.email, 
-      user.phone, 
-      user.display_name, 
-      user.profile_picture
+    const users = [
+      user.uid, user.email, user.phone, user.display_name, user.profile_picture, 
+      user.email, user.phone, user.display_name, user.profile_picture
     ];
-
-    // Store session
+    const sessions=[uuidv4(),user.uid, customToken,req.ip,req.get('User-Agent')]
+    // Store session with prepared statement
     const sessionQuery = `
-      INSERT INTO sessions 
-      (session_id, user_id, token, user_agent, ip_adress, expired_at) 
-      VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO sessions 
+        (session_id, user_id, token, ip_adress, user_agent) 
+        VALUES (?, ?, ?, ?, ?)
     `;
-    const sessionParams = [
-      uuidv4(), 
-      user.uid, 
-      customToken, 
-      req.get('User-Agent') || '', 
-      req.ip || '',
-      new Date(Date.now() + 8 * 60 * 60 * 1000) // 8 hours from now
-    ];
-
     try {
-      // Execute both queries
-      await executeQuery(userQuery, userParams);
-      await executeQuery(sessionQuery, sessionParams);
-
+      await executeQuery(userquery, users);
+      await executeQuery(sessionQuery, sessions);
+      console.log('User added or updated in the database:', result);
       res.json({ 
         token: customToken,
         user: {
           email: user.email,
-          phone: user.phone,
+          phone:user.phone,
           displayName: user.display_name
         }
       });
       
     } catch (error) {
-      console.error('Detailed Database Error:', {
-        errorMessage: error.message,
-        userParams: userParams,
-        sessionParams: sessionParams
-      });
-      return res.status(500).json({ 
-        error: 'Database error', 
-        details: error.message 
-      });
+      console.error('Database error:', err);
+      return res.status(500).json({ error: 'Database error' });
     }
-
+    
   } catch (error) {
     console.error('Firebase authentication error:', error);
     

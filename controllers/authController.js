@@ -148,30 +148,15 @@ function generateTicketData(companies, cities, places) {
 const companies = [
   "General Express",
   "Global Express",
-  "Amour Mezam Company",
   "Buca Voyages",
   "Finexs Voyages",
   "Garanti Express",
   "Touristique Express",
-  "Montréal Voyages",
-  "United Express",
-  "Danay Express",
   "Musango Voyages",
-  "Steve Express",
   "Moghamo Express",
-  "Kribien Voyages",
   "Buca Express",
-  "Flash Express",
-  "Golden Express",
   "Garantie Express",
-  "Afrique Express",
-  "Garanti Express ",
-  "Boulevard Express",
-  "Atlantic Express",
-  "Bus de l'Atlantique",
-  "Sangha Express",
   "Amour Mezam Express",
-  "Santa Lucia Express"
 ];
 module.exports=  { verifyToken, generateTicketData,companies};
 
