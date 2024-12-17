@@ -26,7 +26,7 @@ const path = require('path');
 
   
 
-async function generateTicketPDF(ticketDetailsList) {
+async function generateTicketPDF(ticketDetailsList, options = {}) {
     const {
         qrCodePath = '/var/task/assets/qr-code.png',
         pdfPath = '/var/task/assets/mockup.pdf',

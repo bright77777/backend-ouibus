@@ -61,7 +61,7 @@ app.use('/', Passengers);
 app.use('/', MobilePayement);
 
 app.get('/', (req,res)=>{
-  res.send("Hello world")
+  res.send("Hello world , welcome to my app")
 })
 
 app.post('/',verifyToken, (req, res) => {
