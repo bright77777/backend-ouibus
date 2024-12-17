@@ -6,17 +6,17 @@ const path = require('path');
 
 
   const companyLogos = {
-    "General Express": 'assets/company/General.png',
-    "Global Express": 'assets/company/globalvoyage.png',
-    "Buca Voyages": 'assets/company/buca.png',
-    "Finexs Voyages": 'assets/company/finexvoyage.png',
-    "Garanti Express": 'assets/company/garantiexpress.png',
-    "Touristique Express": 'assets/company/touristique.png',
-    "Musango Voyages": 'assets/company/musango.png',
-    "Moghamo Express": 'assets/company/moghamo.png',
-    "Buca Express": 'assets/company/buca.png',
-    "Garantie Express": 'assets/company/garantiexpress.png',
-    "Amour Mezam Express": 'assets/company/amourmezam.png'
+    "General Express": '/assets/company/General.png',
+    "Global Express": '/assets/company/globalvoyage.png',
+    "Buca Voyages": '/assets/company/buca.png',
+    "Finexs Voyages": '/assets/company/finexvoyage.png',
+    "Garanti Express": '/assets/company/garantiexpress.png',
+    "Touristique Express": '/assets/company/touristique.png',
+    "Musango Voyages": '/assets/company/musango.png',
+    "Moghamo Express": '/assets/company/moghamo.png',
+    "Buca Express": '/assets/company/buca.png',
+    "Garantie Express": '/assets/company/garantiexpress.png',
+    "Amour Mezam Express": '/assets/company/amourmezam.png'
   };
   
   function getCompanyLogoPath(companyName) {
@@ -28,10 +28,10 @@ const path = require('path');
 
 async function generateTicketPDF(ticketDetailsList, options = {}) {
     const {
-        qrCodePath = 'assets/qr-code.png',
-        pdfPath = 'assets/mockup.pdf',
-        outputFilePath = 'assets/output.pdf',
-        logoPath = 'assets/General.png'
+        qrCodePath = '/assets/qr-code.png',
+        pdfPath = '/assets/mockup.pdf',
+        outputFilePath = '/assets/output.pdf',
+        logoPath = '/assets/General.png'
     } = options;
 
     // Ensure ticketDetailsList is an array
