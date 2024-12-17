@@ -10,20 +10,13 @@ router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 
 
-const options = {
-    qrCodePath: './assets/qr-code.png',
-    pdfPath: './assets/mockup.pdf',
-    outputFilePath: './assets/output.pdf',
-    logoPath: './assets/General.png'
-};
-
 router.post('/generate-ticket', async (req, res) => {
     try {
         // Récupérer les détails du ticket depuis le corps de la requête
         const details = req.body;
 
         // Générer le PDF
-        await generateTicketPDF(details, options);
+        await generateTicketPDF(details);
 
         // Attendre que le fichier soit complètement généré
         const filePath = path.resolve(options.outputFilePath);
