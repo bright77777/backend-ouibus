@@ -3,6 +3,29 @@ const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const fs = require('fs');
 const path = require('path');
 
+
+
+  const companyLogos = {
+    "General Express": 'assets/company/General.png',
+    "Global Express": 'assets/company/globalvoyage.png',
+    "Buca Voyages": 'assets/company/buca.png',
+    "Finexs Voyages": 'assets/company/finexvoyage.png',
+    "Garanti Express": 'assets/company/garantiexpress.png',
+    "Touristique Express": 'assets/company/touristique.png',
+    "Musango Voyages": 'assets/company/musango.png',
+    "Moghamo Express": 'assets/company/moghamo.png',
+    "Buca Express": 'assets/company/buca.png',
+    "Garantie Express": 'assets/company/garantiexpress.png',
+    "Amour Mezam Express": 'assets/company/amourmezam.png'
+  };
+  
+  function getCompanyLogoPath(companyName) {
+    return companyLogos[companyName] || 'Company logo not found';
+  }
+  
+
+  
+
 async function generateTicketPDF(ticketDetailsList, options = {}) {
     const {
         qrCodePath = 'assets/qr-code.png',
@@ -76,7 +99,7 @@ async function generateTicketPDF(ticketDetailsList, options = {}) {
                 const qrCodeImage = await newPdfDoc.embedPng(qrCodeImageBytes);
 
                 // Load agency logo
-                const agenceBytes = fs.readFileSync(details.companies || logoPath);
+                const agenceBytes = fs.readFileSync(getCompanyLogoPath(details.company) || logoPath);
                 const agenceImage = await newPdfDoc.embedPng(agenceBytes);
 
                 // Text lines with positioning

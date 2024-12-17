@@ -60,6 +60,10 @@ app.use('/', GeneratorRoute);
 app.use('/', Passengers);
 app.use('/', MobilePayement);
 
+app.get('/', (req,res)=>{
+  res.send("Hello world")
+})
+
 app.post('/',verifyToken, (req, res) => {
   // Vérifier que le corps de la requête contient les données nécessaires
   if (!req.body || !req.body.depart || !req.body.destination) {
@@ -192,9 +196,6 @@ app.post('/auth/firebase', async (req, res) => {
 });
 
 
-
-
-// Validation middleware pour les détails du passager
 
 // Route pour enregistrer les détails du passager
 app.post('/passenger/details', verifyToken, 

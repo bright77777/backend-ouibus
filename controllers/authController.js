@@ -109,7 +109,7 @@ function generateTicketData(companies, cities, places) {
       ticketData.push({
         companyName: company,
         departure_companyDescription: {
-          name1: `${company.toLowerCase()} ${places[i].lieu}`,
+          name1: `${company.toLowerCase()} ${cities[0]}`,
           position: departurePlace.position,
         },
         rating: (Math.random() * 2 + 3).toFixed(1), // Random rating between 3.0 and 5.0
@@ -119,8 +119,7 @@ function generateTicketData(companies, cities, places) {
         duration: `${Math.floor((arrivalTime - departureTime) / 3600000)}h ${Math.floor(((arrivalTime - departureTime) % 3600000) / 60000)}m`,
         arrivalCity: cities[1],
         arrival_companyDescription: {
-          name1: `${company.toLowerCase()} ${places[2].lieu}`,
-          name2: `${company.toLowerCase()} ${places[3].lieu}`,
+          name1: `${company.toLowerCase()} ${cities[1]}`,
           position1: arrivalPlaces[0].position,
           position2: arrivalPlaces[1].position,
         },
