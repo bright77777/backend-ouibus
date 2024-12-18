@@ -24,9 +24,14 @@ const path = require('path');
   }
   
 
-  
 
 async function generateTicketPDF(ticketDetailsList, options = {}) {
+    const {
+        qrCodePath = 'assets/qr-code.png',
+        pdfPath = 'assets/mockup.pdf',
+        outputFilePath = 'assets/output.pdf',
+        logoPath = 'assets/General.png'
+    } = options;
 
     // Ensure ticketDetailsList is an array
     const ticketDetails = Array.isArray(ticketDetailsList) ? ticketDetailsList : [ticketDetailsList];
