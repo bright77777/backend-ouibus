@@ -39,7 +39,7 @@ router.post('/passenger/details', verifyToken, async (req, res) => {
 
       try {
         const [result] = await connection.execute(query, values);
-        console.log('Passenger details saved successfully', result);
+        console.log('Passenger details saved successfully');
       } catch (err) {
         console.error('Database error:', err);
         if (err.code === 'ER_DUP_ENTRY') {
@@ -54,7 +54,7 @@ router.post('/passenger/details', verifyToken, async (req, res) => {
     await connection.commit();
     return res.status(201).json({ success: true, message: 'All passenger details saved successfully' });
 
-  } catch (error) {
+  } catch  (error) {
     await connection.rollback();
     console.error('Unexpected error:', error);
     res.status(500).json({ error: 'Server error', message: 'An unexpected error occurred' });
