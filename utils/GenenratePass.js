@@ -10,12 +10,12 @@ const path = require('path');
     "Global Express": './assets/company/globalvoyage.png',
     "Buca Voyages": './assets/company/buca.png',
     "Finexs Voyages": './assets/company/finexvoyage.png',
-    "Garanti Express": './assets/company/garantiexpress.png',
+    "Garanti Express": './assets/company/guarantiexpress.png',
     "Touristique Express": './assets/company/touristique.png',
     "Musango Voyages": './assets/company/musango.png',
     "Moghamo Express": './assets/company/moghamo.png',
     "Buca Express": './assets/company/buca.png',
-    "Garantie Express": './assets/company/garantiexpress.png',
+    "Garantie Express": './assets/company/guarantiexpress.png',
     "Amour Mezam Express": './assets/company/amourmezam.png'
   };
   
