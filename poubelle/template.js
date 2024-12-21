@@ -3,15 +3,15 @@ const express = require('express');
 const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
-const admin = require('./firebase'); 
+const admin = require('../firebase'); 
 const cors = require('cors');
 const helmet = require('helmet');
 const app = express();
 const PORT = process.env.PORT || 5001;
-const {verifyToken,generateTicketData,companies} = require('./controllers/authController');
+const {verifyToken,generateTicketData,companies} = require('../controllers/authController');
 const { body, validationResult } = require('express-validator');
-const GeneratorRoute=require('./routes/GeneratorRoute')
-const  db= require('./db/Poolconnect')
+const GeneratorRoute=require('../routes/GeneratorRoute')
+const  db= require('../db/Poolconnect')
 const { v4: uuidv4 } = require('uuid');
 
 

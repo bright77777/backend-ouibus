@@ -1,12 +1,10 @@
 const jwt = require('jsonwebtoken');
 
 
-
 function verifyToken(req, res, next) {
   try {
     // Extraire le token de l'en-tête Authorization
     const authHeader = req.headers['authorization'];
-    
     // Vérifier si l'en-tête Authorization existe et commence par "Bearer "
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({ 
@@ -17,7 +15,6 @@ function verifyToken(req, res, next) {
 
     // Extraire le token en supprimant le préfixe "Bearer "
     const token = authHeader.split(' ')[1];
-
     // Vérifier si le token est vide
     if (!token) {
       return res.status(403).json({ 
@@ -83,12 +80,12 @@ function verifyToken(req, res, next) {
 }
 
 function generateTicketData(companies, cities, places) {
-  const seatOptions = [19, 30, 40, 50, 70, 75];
+  const seatOptions = [50, 70, 75];
   const minPrice = 5000;
   const maxPrice = 10000;
   const minDiscount = 1;
   const maxDiscount = 20;
-  const layouts = ['2-2', '3-2'];
+  const layouts = ['3-2', '3-2'];
 
   const ticketData = [];
 
@@ -124,7 +121,7 @@ function generateTicketData(companies, cities, places) {
           position2: arrivalPlaces[1].position,
         },
         arrivalTime: arrivalTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        seatsAvailable: Math.floor(Math.random() * totalSeats),
+        seatsAvailable: Math.floor(Math.random() * totalSeats)+1,
         discount,
         originalPrice: `XAF ${price}`,
         price: `XAF ${Math.ceil(discountedPrice)}`,
