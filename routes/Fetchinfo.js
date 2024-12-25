@@ -11,18 +11,18 @@ router.use(cors());
 router.post('/fetchinfo', verifyToken, bookToken, async (req, res) => {
   const booktoken = req.booktoken;
   const query = `SELECT 
-                   count(passenger_id) AS passenger_count, 
-                   full_name, 
-                   id_document, 
-                   birth, 
-                   phone, 
-                   type, 
-                   title 
-                 FROM passengers 
-                 WHERE passenger_token = ? 
-                 GROUP BY full_name, id_document, birth, phone, type, title`;
-  const params = [booktoken];
-
+                 COUNT(p.passenger_id) AS passenger_count,
+                 b.seats,
+                 p.full_name, 
+                 p.id_document, 
+                 p.phone, 
+                 p.type, 
+                 p.title 
+               FROM passengers p
+               JOIN booking b ON p.passenger_id = b.passenger_id
+               WHERE b.passenger_token = ?
+               GROUP BY b.seats, p.full_name, p.id_document, p.birth, p.phone, p.type, p.title`;
+const params = [booktoken];
   try {
     const result = await executeQuery(query, params);
     res.status(200).json(result);
