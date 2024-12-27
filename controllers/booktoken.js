@@ -27,7 +27,7 @@ function bookToken(req, res, next) {
       // Vérifier le token avec des options supplémentaires
       jwt.verify(token, process.env.JWT_SECRET, {
         algorithms: ['HS256'], // Spécifier l'algorithme
-        maxAge: '20m' // Durée de validité du token
+        maxAge: '1h' // Durée de validité du token
       }, (err, decoded) => {
         if (err) {
           // Gérer différents types d'erreurs de token

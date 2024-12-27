@@ -1,8 +1,8 @@
 const  pool= require('../db/Poolconnect');
 const executeQuery = async (query, params) => {
     let attempts = 0;
-    maxRetries = 3, 
-    retryDelay = 500
+    maxRetries = 4, 
+    retryDelay = 200
     
     while (attempts < maxRetries) {
       try {

@@ -27,7 +27,7 @@ router.post('/passenger/details', verifyToken, async (req, res) => {
         passengers: passengers 
       },
       process.env.JWT_SECRET,
-      { expiresIn: '20m' }
+      { expiresIn: '1h' }
     );
     // Requête pour insérer ou mettre à jour les détails du passager
     const query = `
@@ -44,7 +44,7 @@ router.post('/passenger/details', verifyToken, async (req, res) => {
     // Exécution de la requête pour chaque passager
     for (const passenger of passengers) {
       const passengerId = generateUniqueId();
-      const bookid=generateUniqueId(); // Générer un identifiant unique pour chaque passager
+      const bookid=generateUniqueId(); 
       const { fullName, ID, dateOfBirth, title, phone, type,seats } = passenger;
       const values = [passengerId, uid, fullName, ID, dateOfBirth, phone, type, title,customToken];
       const bookvalues=[bookid,passengerId,seats]

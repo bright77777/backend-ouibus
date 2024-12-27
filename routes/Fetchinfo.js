@@ -20,7 +20,7 @@ router.post('/fetchinfo', verifyToken, bookToken, async (req, res) => {
                  p.title 
                FROM passengers p
                JOIN booking b ON p.passenger_id = b.passenger_id
-               WHERE b.passenger_token = ?
+               WHERE p.passenger_token = ?
                GROUP BY b.seats, p.full_name, p.id_document, p.birth, p.phone, p.type, p.title`;
 const params = [booktoken];
   try {
