@@ -19,8 +19,6 @@ const {executeQuery}=require('./db/executeQuery')
 const fetchinfo=require('./routes/Fetchinfo')
 const generateSeat=require('./routes/Availableseat')
 
-console.clear()
-
 // Middleware parsing JSON
 app.use(bodyParser.json({
   verify: (req, res, buf) => {
@@ -29,7 +27,15 @@ app.use(bodyParser.json({
       }
   }
 }));
-app.use(cors());
+
+
+
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
+
 app.use( helmet({ crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } }) );
 
 

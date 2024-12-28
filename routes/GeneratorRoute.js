@@ -5,7 +5,12 @@ const path = require('path');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const router = express.Router();
-router.use(cors());
+router.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+  }));
+
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: true }));
 

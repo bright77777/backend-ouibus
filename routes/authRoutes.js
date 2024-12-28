@@ -3,8 +3,11 @@ const router = express.Router();
 const cors = require('cors');
 const admin = require('../firebase'); 
 const {verifyToken,generateTicketData} = require('../controllers/authController');
-router.use(cors());
-
+router.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 // Exemple d'utilisation
 const companies = ['GENERAL EXPRESS','Finess voyage'];
 const cities = ['Yaounde', 'Douala'];

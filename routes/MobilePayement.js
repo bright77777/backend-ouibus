@@ -18,8 +18,11 @@ router.use(bodyParser.json({
   }
 }));
 router.use( helmet({ crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" } }) );
-router.use(cors());
-
+router.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 // Configuration des API
 const mtnConfig = {
   apiUser: process.env.MTN_API_USER,

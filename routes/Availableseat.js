@@ -7,7 +7,12 @@ const { executeQuery } = require('../db/executeQuery');
 const { generateArray } = require('../utils/generateSeat');
 const bodyParser = require('body-parser');
 
-router.use(cors());
+router.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+    allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+ }));
+
 router.use(bodyParser.json({
     verify: (req, res, buf) => {
         if (buf.length > 1024 * 1024) { // Limite à 1MB

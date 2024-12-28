@@ -6,7 +6,11 @@ const pool = require('../db/Poolconnect');
 const { bookToken } = require('../controllers/booktoken');
 const { executeQuery } = require('../db/executeQuery');
 
-router.use(cors());
+router.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 
 router.post('/fetchinfo', verifyToken, bookToken, async (req, res) => {
   const booktoken = req.booktoken;

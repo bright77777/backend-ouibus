@@ -2,7 +2,11 @@ const express = require('express');
 const router = express.Router();
 const cors = require('cors');
 const { verifyToken } = require('../controllers/authController');
-router.use(cors());
+router.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
 const pool = require('../db/Poolconnect');
 const crypto = require('crypto');
 const bookToken=require('../controllers/booktoken')
