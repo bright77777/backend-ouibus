@@ -19,6 +19,7 @@ const {executeQuery}=require('./db/executeQuery')
 const fetchinfo=require('./routes/Fetchinfo')
 const generateSeat=require('./routes/Availableseat')
 const authRoute=require('./routes/authRoutes')
+const formulaire=require('./routes/form-fotetsa-com')
 
 // Middleware parsing JSON
 app.use(bodyParser.json({
@@ -56,6 +57,7 @@ app.use('/', MobilePayement);
 app.use('/', fetchinfo);
 app.use('/', generateSeat);
 app.use('/', authRoute);
+app.use('/', formulaire);
 
 
 

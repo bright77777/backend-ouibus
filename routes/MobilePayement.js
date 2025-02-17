@@ -158,7 +158,7 @@ router.post('/pay', async (req, res) => {
     await connection.execute(insertQuery, [transactionId, bookId, amount, method, number, currency]);
 
     // Attendre et vérifier le statut plusieurs fois
-    const maxAttempts = 4; // Nombre maximum de tentatives
+    const maxAttempts = 6; // Nombre maximum de tentatives donc 1 minutes
     const delayBetweenAttempts = 10000; // Délai entre les tentatives (10 secondes)
     let paymentStatus = 'PENDING';
     let paymentMessage = 'Payment is pending';
