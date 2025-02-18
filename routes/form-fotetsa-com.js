@@ -1,16 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const cors = require('cors');
-router.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
-}));
 const pool = require('../db/Poolconnect');
 
 const multer = require('multer');
 const path = require('path');
-const {executeQuery} = require('../db/executeQuery');
+const { executeQuery } = require('../db/executeQuery');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -29,23 +24,25 @@ router.post('/form', upload.array('piece_jointe'), async (req, res) => {
   const { firstname, lastname, email, phone, votre_budget, comment_avez_vous_connu_fotetsa__, message } = req.body;
   const files = req.files;
 
+  if (!firstname || !lastname || !email || !phone || !votre_budget || !comment_avez_vous_connu_fotetsa__ || !message) {
+    return res.status(400).json({ success: false, message: 'Tous les champs du formulaire sont obligatoires.' });
+  }
+
   try {
     // Insertion des données du formulaire dans la table contacts
-    // ...existing code...
     const contactResult = await pool.query(
-        'INSERT INTO contacts (firstname, lastname, email, phone, budget, source, message) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [firstname, lastname, email, phone, votre_budget, comment_avez_vous_connu_fotetsa__, message]
-      );
-  
-      // Log pour vérifier la requête et les résultats
-      console.log('Résultat de l\'insertion dans contacts :', contactResult);
-  
-      // Utiliser insertId pour obtenir l'ID du contact inséré
-      const contactId = contactResult.insertId || contactResult[0].insertId;
-      if (!contactId) {
-        throw new Error('ID de contact non récupéré');
-      }
-  // ...existing code...
+      'INSERT INTO contacts (firstname, lastname, email, phone, budget, source, message) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [firstname, lastname, email, phone, votre_budget, comment_avez_vous_connu_fotetsa__, message]
+    );
+
+    // Log pour vérifier la requête et les résultats
+    console.log('Résultat de l\'insertion dans contacts :', contactResult);
+
+    // Utiliser insertId pour obtenir l'ID du contact inséré
+    const contactId = contactResult.insertId || contactResult[0].insertId;
+    if (!contactId) {
+      throw new Error('ID de contact non récupéré');
+    }
 
     // Insertion des fichiers joints dans la table attachments
     if (files && files.length > 0) {
@@ -57,10 +54,14 @@ router.post('/form', upload.array('piece_jointe'), async (req, res) => {
       }
     }
 
-    res.status(200).json({ success: true });
+    res.status(201).json({ success: true, message: 'Formulaire soumis avec succès.', contactId });
   } catch (error) {
     console.error('Erreur lors de l\'insertion des données :', error);
-    res.status(500).json({ success: false, message: 'Une erreur est survenue. Veuillez réessayer.' });
+    if (error.code === 'ER_DUP_ENTRY') {
+      res.status(409).json({ success: false, message: 'Un enregistrement avec cet email existe déjà.' });
+    } else {
+      res.status(500).json({ success: false, message: 'Une erreur est survenue. Veuillez réessayer.' });
+    }
   }
 });
 
