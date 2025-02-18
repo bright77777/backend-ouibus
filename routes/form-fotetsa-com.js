@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const cors = require('cors');
+router.use(cors());
 const pool = require('../db/Poolconnect');
 
 const multer = require('multer');
