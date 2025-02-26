@@ -7,6 +7,7 @@ const pool = require('../db/Poolconnect');
 const multer = require('multer');
 const path = require('path');
 const { executeQuery } = require('../db/executeQuery');
+const nodemailer = require('nodemailer');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -55,7 +56,33 @@ router.post('/form', upload.array('piece_jointe'), async (req, res) => {
       }
     }
 
-    res.status(201).json({ success: true, message: 'Formulaire soumis avec succès.', contactId });
+    // Configuration de nodemailer
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.hostinger.com',
+      port: process.env.SMTP_PORT || 465, // ou 587 pour TLS
+      secure: process.env.SMTP_SECURE === 'true', // true pour 465, false pour les autres ports
+      auth: {
+        user: process.env.SMTP_USER || 'no-reply@fotetsa.com',
+        pass: process.env.SMTP_PASS 
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    // Options de l'email
+    const mailOptions = {
+      from: process.env.SMTP_USER || 'no-reply@fotetsa.com',
+      to: email,
+      subject: 'Confirmation de soumission de formulaire',
+      text: `Bonjour ${firstname} ${lastname},\n\nMerci d'avoir soumis votre formulaire. Nous avons bien reçu vos informations et nous vous contacterons sous peu.\n\nCordialement,\nL'équipe Fotetsa`
+    };
+
+    // Envoi de l'email
+    await transporter.sendMail(mailOptions);
+    console.log('Email de confirmation envoyé à :', email);
+
+    res.status(201).json({ success: true, message: 'Formulaire soumis avec succès et email de confirmation envoyé.', contactId });
   } catch (error) {
     console.error('Erreur lors de l\'insertion des données :', error);
     if (error.code === 'ER_DUP_ENTRY') {
