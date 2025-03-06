@@ -1,0 +1,11 @@
+ID,Étape du pipeline,Action,Statut,Notes
+1,Prospect,Recherche de prospects,Prospect en attente,Rechercher sur réseaux, recommandations
+2,Contacté,Envoi de message,Contacté,Email, LinkedIn
+3,Qualifié,Réunion, Qualification,Qualifié ou non,Vérifier le budget, besoins
+4,Proposition envoyée,Créer proposition,Proposition envoyée,Préparer une offre détaillée
+5,Négociation,Négociation des termes,Négociation en cours,Discuter des détails avec le client
+6,Contrat signé,Signature du contrat,Contrat signé,Obtenir la signature officielle
+7,Onboard,Intégration du client,Onboarding terminé,Fixer un calendrier de projet
+8,En cours,Exécution des tâches,En cours de réalisation,Livraison des services
+9,En suivi,Vérification de la satisfaction,En suivi,Assurer la satisfaction du client
+10,Client fidèle,Entretenir la relation,Fidélisation,Offrir des services complémentaires

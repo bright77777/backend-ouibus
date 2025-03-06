@@ -3,6 +3,7 @@ const router = express.Router();
 const cors = require('cors');
 router.use(cors());
 const pool = require('../db/Poolconnect');
+const fetch = require('node-fetch'); // Ajout nécessaire
 
 const multer = require('multer');
 const path = require('path');
@@ -31,22 +32,15 @@ router.post('/form', upload.array('piece_jointe'), async (req, res) => {
   }
 
   try {
-    // Insertion des données du formulaire dans la table contacts
+    // Insertion en base de données
     const contactResult = await pool.query(
       'INSERT INTO contacts (firstname, lastname, email, phone, budget, source, message) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [firstname, lastname, email, phone, votre_budget, comment_avez_vous_connu_fotetsa__, message]
     );
 
-    // Log pour vérifier la requête et les résultats
-    console.log('Résultat de l\'insertion dans contacts :', contactResult);
-
-    // Utiliser insertId pour obtenir l'ID du contact inséré
     const contactId = contactResult.insertId || contactResult[0].insertId;
-    if (!contactId) {
-      throw new Error('ID de contact non récupéré');
-    }
-
-    // Insertion des fichiers joints dans la table attachments
+    
+    // Gestion des fichiers
     if (files && files.length > 0) {
       for (const file of files) {
         await executeQuery(
@@ -56,11 +50,11 @@ router.post('/form', upload.array('piece_jointe'), async (req, res) => {
       }
     }
 
-    // Configuration de nodemailer
+    // Envoi de l'email
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.hostinger.com',
-      port: process.env.SMTP_PORT || 465, // ou 587 pour TLS
-      secure: process.env.SMTP_SECURE === 'true', // true pour 465, false pour les autres ports
+      port: process.env.SMTP_PORT || 465,
+      secure: process.env.SMTP_SECURE === 'true',
       auth: {
         user: process.env.SMTP_USER || 'no-reply@fotetsa.com',
         pass: process.env.SMTP_PASS 
@@ -70,26 +64,52 @@ router.post('/form', upload.array('piece_jointe'), async (req, res) => {
       }
     });
 
-    // Options de l'email
-    const mailOptions = {
-      from: process.env.SMTP_USER || 'no-reply@fotetsa.com',
+    await transporter.sendMail({
+      from: process.env.SMTP_USER,
       to: email,
       subject: 'Confirmation de soumission de formulaire',
-      text: `Bonjour ${firstname} ${lastname},\n\nMerci d'avoir soumis votre formulaire. Nous avons bien reçu vos informations et nous vous contacterons sous peu.\n\nCordialement,\nL'équipe Fotetsa`
+      text: `Bonjour ${firstname} ${lastname},\n\nMerci pour votre demande.`
+    });
+
+    // Envoi vers Airtable
+    const airtableData = {
+      fields: {
+        "Prénom": firstname,
+        "Nom": lastname,
+        "Email": email,
+        "Téléphone": phone,
+        "Budget": votre_budget,
+        "Source": comment_avez_vous_connu_fotetsa__,
+        "Message": message,
+        "Fichiers": files?.map(f => f.originalname).join(', ') || 'Aucun'
+      }
     };
 
-    // Envoi de l'email
-    await transporter.sendMail(mailOptions);
-    console.log('Email de confirmation envoyé à :', email);
+    await fetch('https://hooks.airtable.com/workflows/v1/genericWebhook/appFRpfzZcdgqCtFK/wflVdwIXkftYLxRR5/wtrz1unMxT0hjK8VG', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(airtableData)
+    });
 
-    res.status(201).json({ success: true, message: 'Formulaire soumis avec succès et email de confirmation envoyé.', contactId });
+    res.status(201).json({ 
+      success: true, 
+      message: 'Données sauvegardées et transférées',
+      contactId 
+    });
+
   } catch (error) {
-    console.error('Erreur lors de l\'insertion des données :', error);
+    console.error('Erreur complète:', error);
+    
+    let errorMessage = 'Erreur serveur';
     if (error.code === 'ER_DUP_ENTRY') {
-      res.status(409).json({ success: false, message: 'Un enregistrement avec cet email existe déjà.' });
-    } else {
-      res.status(500).json({ success: false, message: 'Une erreur est survenue. Veuillez réessayer.' });
+      errorMessage = 'Email déjà existant';
     }
+
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

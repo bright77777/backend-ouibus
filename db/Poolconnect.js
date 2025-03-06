@@ -8,6 +8,7 @@ const db = mysql.createPool({
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    connectTimeout: 10000, // 10 secondes
     ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : false
 });
 
