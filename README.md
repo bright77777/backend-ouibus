@@ -34,7 +34,7 @@ The `tasks` table includes the following fields:
 
 ### SQL Script to Create Table
 
-```sql
+sql
 CREATE TABLE tasks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -42,24 +42,24 @@ CREATE TABLE tasks (
     state ENUM('started', 'stopped', 'finished', 'deleted') DEFAULT 'started',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);```
+);
 
 ⚙️ Setup Instructions
-	1.	Clone the repository
+1.	Clone the repository
 
 git clone https://github.com/bright77777/backend-ouibus.git
 cd backend-ouibus
 
-	2.	Install dependencies
+2.	Install dependencies
 
 npm install
 
-	3.	Environment variables
+3. Environment variables
 
 The .env file is already included in the repository. It contains:
 
 
-	4.	Start the server
+4.	Start the server
 
 npm run dev
 
